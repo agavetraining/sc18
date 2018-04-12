@@ -1,0 +1,59 @@
+version: '2'
+
+volumes:
+  training-volume:
+  ssh-keygen-volume:
+
+services:
+
+  # This is a single shot container that creates a set of ssh keys per instance
+  # and deploys them to a persistent volume shared between the sandbox and
+  # jupyter container. By doing this, we don't need to ship keys with the image
+  # or source.
+  ssh-keygen:
+    image: agaveplatform/jupyter-notebook:5.2
+    entrypoint: /bin/bash
+    command: /usr/local/bin/keygen.sh
+    user: jovyan
+    env_file:
+      - training.env
+    volumes:
+      - ssh-keygen-volume:/home/jovyan/.ssh
+      - ./docker/ssh-keygen/keygen.sh:/usr/local/bin/keygen.sh
+
+  jupyter:
+    image: agaveplatform/jupyter-notebook:5.2
+    command: start-notebook.sh --NotebookApp.token=''
+    mem_limit: 2048m
+    restart: on-failure
+    ports:
+      - '8888:8888'
+    depends_on:
+      - ssh-keygen
+    env_file:
+      - training.env
+    environment:
+      - GRANT_SUDO=yes
+    volumes:
+      - ssh-keygen-volume:/home/jovyan/.ssh:ro
+      - training-volume:/home/jovyan/work
+      - .:/home/jovyan/notebooks
+      - ./INSTALL.ipynb:/home/jovyan/INSTALL.ipynb
+
+  sandbox:
+    image: agaveplatform/training-sandbox:latest
+    mem_limit: 2048m
+    privileged: True
+    restart: on-failure
+    ports:
+      - '10022:22'
+    depends_on:
+      - ssh-keygen
+    env_file:
+      - training.env
+    environment:
+      - VM_MACHINE=$$ENVIRONMENT-node-$$AGAVE_USERNAME
+    volumes:
+      - ssh-keygen-volume:/home/jovyan/.ssh:ro
+      - training-volume:/home/jovyan/work
+      - /var/run/docker.sock:/var/run/docker.sock

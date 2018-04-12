@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# post-checkout hook - looks for changes to Gemfile[.lock] or package.json, and if
+# found, reinstalls the given packages every time you `git merge` or `git pull`
+
+# To install, copy to your project's .git/hooks folder, and `chmod +x post-merge`
+
+function changed {
+  git diff --name-only HEAD@{2} HEAD | grep "^$1" > /dev/null 2>&1
+}
+
+if changed 'Gemfile.*'; then
+  echo "Gemfile changed, bundling"
+  bundle install
+  [[ -d 'tmp' ]] && touch 'tmp/restart.txt'
+fi
+
+if changed 'db/migrate'; then
+  echo "Migrations pending, migrating"
+  rake db:migrate RAILS_ENV=development
+  rake db:migrate RAILS_ENV=test
+  rake db:migrate RAILS_ENV=production
+  [[ -d 'tmp' ]] && touch 'tmp/restart.txt'
+fi
+
+if changed 'package.json'; then
+  npm install
+fi
