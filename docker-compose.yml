@@ -37,7 +37,7 @@ services:
 
   jupyter:
     image: agaveplatform/jupyter-notebook:5.2
-    command: start-notebook.sh --NotebookApp.token=''
+#    command: start-notebook.sh --NotebookApp.token=''
     mem_limit: 2048m
     restart: on-failure
     ports:
@@ -108,23 +108,3 @@ services:
       - "traefik.backend=jenkins"
       - "traefik.frontend.rule=PathPrefix:/jenkins"
       - "traefik.frontend.passHostHeader=true"
-
-#  jenkins:
-#    image: jenkins/jenkins:lts
-#    mem_limit: 2048m
-#    privileged: True
-#    restart: on-failure
-#    ports:
-#      - '8080:8080'
-#      - '50000:50000'
-#    depends_on:
-#      - ssh-keygen
-#    env_file:
-#      - training.env
-#    environment:
-#      - VM_MACHINE=$$ENVIRONMENT-node-$$AGAVE_USERNAME
-#      - JENKINS_OPTS="--prefix=/jenkins"
-#    volumes:
-#      - ssh-keygen-volume:/home/jovyan/.ssh:ro
-#      - training-jenkins-home:/var/jenkins_home
-#      - /var/run/docker.sock:/var/run/docker.sock
