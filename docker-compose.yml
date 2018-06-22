@@ -49,7 +49,7 @@ services:
     environment:
       - GRANT_SUDO=yes
     volumes:
-      - ssh-keygen-volume:/home/jovyan/.ssh:ro
+      - ssh-keygen-volume:/home/jovyan/.ssh
       - training-volume:/home/jovyan/work
       - .:/home/jovyan/notebooks
       - ./INSTALL.ipynb:/home/jovyan/INSTALL.ipynb
@@ -74,7 +74,7 @@ services:
     environment:
       - VM_MACHINE=$$ENVIRONMENT-node-$$AGAVE_USERNAME
     volumes:
-      - ssh-keygen-volume:/home/jovyan/.ssh:ro
+      - ssh-keygen-volume:/home/jovyan/.ssh
       - training-volume:/home/jovyan/work
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
@@ -99,7 +99,7 @@ services:
       - AGAVE_CACHE_DIR=/var/jenkins_home/.$AGAVE_TENANT
 #      - JENKINS_OPTS="--prefix=/jenkins "
     volumes:
-      - ssh-keygen-volume:/var/jenkins_home/.ssh:ro
+      - ssh-keygen-volume:/var/jenkins_home/.ssh
 #      - jenkins-home-volume:/var/jenkins_home
     labels:
       - "traefik.port=8080"

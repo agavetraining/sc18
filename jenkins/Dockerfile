@@ -4,7 +4,7 @@ MAINTAINER Rion Dooley<deardooley@gmail.com>
 
 # Install jq and Agave CLI
 USER root
-RUN apt-get update && apt-get install -y curl openssl  && \
+RUN apt-get update && apt-get install -y curl openssl && \
     cd /usr/local && \
     wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 && \
     mv /usr/local/jq-linux64 /usr/local/bin/jq && \

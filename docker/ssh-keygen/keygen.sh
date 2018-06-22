@@ -37,9 +37,6 @@ if [ ! -f "$PRIVATE_KEY" ] || [ -n "$REPLACE" ]; then
   fi
 
   /usr/bin/ssh-keygen -q -t rsa -N '' -f $PRIVATE_KEY
-  chmod 700 $KEYS_PATH
-  chmod 644 $PUBLIC_KEY
-  chmod 600 $PRIVATE_KEY
 
   if [ -f "$KEYS_PATH/authorized_keys" ]; then
 #    echo ""
@@ -53,6 +50,10 @@ if [ ! -f "$PRIVATE_KEY" ] || [ -n "$REPLACE" ]; then
 else
   echo "Private key already exists and will be used. You may rotate the current key by setting the \"ROTATE\" environment variable or overwrite it by setting the \"REPLACE\" environment variable."
 fi
+
+chmod 700 $KEYS_PATH
+chmod 644 $PUBLIC_KEY
+chmod 600 $PRIVATE_KEY
 
 echo "========= PUBLIC KEY ============"
 cat $PUBLIC_KEY
