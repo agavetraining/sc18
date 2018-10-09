@@ -12,7 +12,7 @@ services:
     image: traefik:latest
     mem_limit: 512m
     #command: --debug=True --docker --docker.watch --web --web.address=:28443 --entryPoints='Name:http Address::80 Redirect.EntryPoint:https' --entryPoints='Name:https Address::443 TLS:/ssl/agave.training.crt,/ssl/agave.training.key' --defaultEntryPoints='http,https'
-    command: --debug=True --docker --docker.watch --web --web.address=:28443 --entryPoints='Name:http Address::80 --entryPoints='Name:https Address::443 --defaultEntryPoints='http,https'
+    command: --debug=True --docker --docker.watch --web --web.address=:28443 --entryPoints='Name:http Address::80' --entryPoints='Name:https Address::443' --defaultEntryPoints='http,https'
     ports:
       - '443:443'
       - '80:80'
