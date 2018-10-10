@@ -14,9 +14,11 @@ services:
     #command: --debug=True --docker --docker.watch --web --web.address=:28443 --entryPoints='Name:http Address::80 Redirect.EntryPoint:https' --entryPoints='Name:https Address::443 TLS:/ssl/agave.training.crt,/ssl/agave.training.key' --defaultEntryPoints='http,https'
     command: --debug=True --docker --docker.watch --web --web.address=:28443 --entryPoints='Name:http Address::80 --entryPoints='Name:https Address::443 --defaultEntryPoints='http,https'
     ports:
-      - '443:443'
-      - '80:80'
-      - '28443:28443'
+      # Not currently serving content here
+      # - '443:443'
+      - '8888:80'
+      # This is a terminal for traefik. Open it up if you need to see it.
+      # - '28443:28443'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -40,8 +42,9 @@ services:
 #    command: start-notebook.sh --NotebookApp.token=''
     mem_limit: 2048m
     restart: on-failure
-    ports:
-      - '8888:8888'
+    # We will access the notebook through Traefic
+    #ports:
+    #  - '8888:8888'
     depends_on:
       - ssh-keygen
     env_file:
@@ -65,6 +68,7 @@ services:
     mem_limit: 2048m
     privileged: True
     restart: on-failure
+    # This port needs to be exposed for ngrok.
     ports:
       - '10022:22'
     depends_on:
@@ -88,9 +92,9 @@ services:
     mem_limit: 2048m
     privileged: True
     restart: on-failure
-    ports:
-      - '8080:8080'
-      - '8443:8443'
+    #ports:
+    #  - '8080:8080'
+    #  - '8443:8443'
     depends_on:
       - ssh-keygen
     env_file:
