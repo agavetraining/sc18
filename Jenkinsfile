@@ -75,9 +75,14 @@ node {
 
     stage("Submit job") {
       def submitOutput = sh(returnStdout: true, script: "jobs-submit -F funwave-build-job.json")
-      env.BUILD_JOB_ID = submitOutput.split(" ")[-1]
+      env.BUILD_JOB_ID = submitOutput.split(" ")[-1].trim()
       sleep 90
-      sh "jobs-output-get -r ${env.BUILD_JOB_ID} funwave-build.out"
+      try{
+        sh "jobs-output-list --rich --filter=type,length,name ${env.BUILD_JOB_ID}"
+        sh "jobs-output-get -P ${env.BUILD_JOB_ID} funwave-build.out"
+      } catch (error) {
+        println "Could not get output from jobid ${env.BUILD_JOB_ID}"
+      }
     }
 
   } catch (error) {
