@@ -3,7 +3,7 @@ version: '2'
 volumes:
   training-volume:
   ssh-keygen-volume:
-  jenkins-home-volume:
+  # jenkins-home-volume:
 
 services:
 
@@ -92,8 +92,8 @@ services:
     mem_limit: 2048m
     privileged: True
     restart: on-failure
-    #ports:
-    #  - '8080:8080'
+    ports:
+      - '8080:8080'
     #  - '8443:8443'
     depends_on:
       - ssh-keygen
@@ -104,7 +104,7 @@ services:
 #      - JENKINS_OPTS="--prefix=/jenkins "
     volumes:
       - ssh-keygen-volume:/var/jenkins_home/.ssh
-#      - jenkins-home-volume:/var/jenkins_home
+      - ./jenkins/jenkins_home:/var/jenkins_home
     labels:
       - "traefik.port=8080"
       - "traefik.protocol=http"
