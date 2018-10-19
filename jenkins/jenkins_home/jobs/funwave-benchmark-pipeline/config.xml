@@ -1,7 +1,6 @@
 <?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.15">
-  <actions/>
-  <description>SC18 tutorial build pipeline for Funwave TVD</description>
+  <description></description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
@@ -9,14 +8,25 @@
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
           <name>JOB_TYPE</name>
-          <description>Job type to be used in app configuration.</description>
-          <defaultValue>build</defaultValue>
+          <description></description>
+          <defaultValue>benchmark</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
     <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
-      <triggers/>
+      <triggers>
+        <jenkins.triggers.ReverseBuildTrigger>
+          <spec></spec>
+          <upstreamProjects>funwave-build-pipeline, </upstreamProjects>
+          <threshold>
+            <name>SUCCESS</name>
+            <ordinal>0</ordinal>
+            <color>BLUE</color>
+            <completeBuild>true</completeBuild>
+          </threshold>
+        </jenkins.triggers.ReverseBuildTrigger>
+      </triggers>
     </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
   </properties>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.41">
@@ -41,6 +51,5 @@
     <lightweight>true</lightweight>
   </definition>
   <triggers/>
-  <authToken>sc18-training-job</authToken>
   <disabled>false</disabled>
 </flow-definition>

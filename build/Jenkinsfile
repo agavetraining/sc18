@@ -6,7 +6,7 @@ node {
 
   env.AGAVE_TENANTS_API_BASEURL = "https://sandbox.agaveplatform.org/tenants"
   env.MACHINE_NAME = "sandbox"
-  env.AGAVE_APP_NAME = "funwave-tvd-build-${env.AGAVE_USERNAME}"
+  env.AGAVE_APP_NAME = "funwave-tvd-${env.JOB_TYPE}-${env.AGAVE_USERNAME}"
   env.AGAVE_CLIENT_NAME = "jenkins-cli-${env.AGAVE_USERNAME}"
 
   try {
@@ -45,7 +45,7 @@ node {
     }
 
     stage("Update app") {
-      sh "apps-addupdate -F build/funwave-build-app.txt"
+      sh "apps-addupdate -F build/funwave-${env.JOB_TYPE}-app.txt"
 
       env.WEBHOOK_URL = sh(returnStdout: true, script: "requestbin-create")
       env.WEBHOOK_URL = env.WEBHOOK_URL.trim()
@@ -62,7 +62,7 @@ node {
 
       def appSpecs = [
         name: "funwave-build",
-        appId: "${env.AGAVE_USERNAME}-${env.MACHINE_NAME}-funwave-dbuild-1.0",
+        appId: "${env.AGAVE_USERNAME}-${env.MACHINE_NAME}-funwave-d${env.JOB_TYPE}-1.0",
         maxRunTime: "00:10:00",
         archive: false,
         notifications: [notificationsSpecs],
@@ -70,21 +70,21 @@ node {
       ]
 
       def jsonContent = JsonOutput.toJson(appSpecs)
-      writeFile(file: "build/funwave-build-job.json", text: jsonContent)
+      writeFile(file: "build/funwave-${env.JOB_TYPE}-job.json", text: jsonContent)
     }
 
     stage("Submit job") {
-      def submitOutput = sh(returnStdout: true, script: "jobs-submit -F build/funwave-build-job.json")
+      def submitOutput = sh(returnStdout: true, script: "jobs-submit -F build/funwave-${env.JOB_TYPE}-job.json")
       def jobId = submitOutput.split(" ")[-1]
-      env.BUILD_JOB_ID = jobId.trim()
+      env.JOB_ID = jobId.trim()
 
       sleep 90
 
       try {
-        sh "jobs-output-list --rich --filter=type,length,name ${env.BUILD_JOB_ID}"
-        sh "jobs-output-get -P ${env.BUILD_JOB_ID} funwave-build.out"
+        sh "jobs-output-list --rich --filter=type,length,name ${env.JOB_ID}"
+        sh "jobs-output-get -P ${env.JOB_ID} funwave-${env.JOB_TYPE}.out"
       } catch (error) {
-        print "Could not get output from jobid ${env.BUILD_JOB_ID}"
+        print "Could not get output from jobid ${env.JOB_ID}"
       }
 
     }
@@ -92,5 +92,18 @@ node {
   } catch (error) {
     currentBuild.result = "FAILURE"
     throw error
+  }
+}
+
+// This is covered in notebook 10
+if (currentBuild.result == 'SUCCESS' && env.JOB_TYPE == 'build') {
+  stage('Run benchmarks') {
+    def benchmarkPipeline = build job: 'funwave-benchmark-pipeline', parameters: [
+      [
+        $class: 'StringParameterValue',
+        name: 'JOB_TYPE',
+        value: 'benchmark'
+      ]
+    ]
   }
 }
