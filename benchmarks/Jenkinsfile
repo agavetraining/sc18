@@ -1,0 +1,31 @@
+import groovy.json.JsonOutput
+
+def JobStages = load("JobStages.groovy")
+
+
+node {
+  currentBuild.result = "SUCCESS"
+
+  env.AGAVE_TENANTS_API_BASEURL = "https://sandbox.agaveplatform.org/tenants"
+  env.MACHINE_NAME = "sandbox"
+  env.AGAVE_APP_NAME = "funwave-tvd-build-${env.AGAVE_USERNAME}"
+  env.AGAVE_CLIENT_NAME = "jenkins-cli-${env.AGAVE_USERNAME}"
+
+  try {
+
+    JobStages.setUpCli(env)
+    JobStages.cloneRepository()
+    JobStages.updateApp('build', env)
+    JobStages.submitJob('build', env)
+
+    stage("Run benchmarks") {
+      
+    }
+
+  } catch (error) {
+
+    currentBuild.result = "FAILURE"
+    throw error
+
+  }
+}
