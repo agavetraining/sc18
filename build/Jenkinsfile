@@ -45,7 +45,7 @@ node {
     }
 
     stage("Update app") {
-      sh "apps-addupdate -F funwave-build-app.txt"
+      sh "apps-addupdate -F build/funwave-build-app.txt"
 
       env.WEBHOOK_URL = sh(returnStdout: true, script: "requestbin-create")
       env.WEBHOOK_URL = env.WEBHOOK_URL.trim()
@@ -70,23 +70,23 @@ node {
       ]
 
       def jsonContent = JsonOutput.toJson(appSpecs)
-      writeFile(file: "funwave-build-job.json", text: jsonContent)
+      writeFile(file: "build/funwave-build-job.json", text: jsonContent)
     }
 
     stage("Submit job") {
-      def submitOutput = sh(returnStdout: true, script: "jobs-submit -F funwave-build-job.json")
+      def submitOutput = sh(returnStdout: true, script: "jobs-submit -F build/funwave-build-job.json")
       def jobId = submitOutput.split(" ")[-1]
       env.BUILD_JOB_ID = jobId.trim()
-      
+
       sleep 90
-      
+
       try {
         sh "jobs-output-list --rich --filter=type,length,name ${env.BUILD_JOB_ID}"
         sh "jobs-output-get -P ${env.BUILD_JOB_ID} funwave-build.out"
       } catch (error) {
         print "Could not get output from jobid ${env.BUILD_JOB_ID}"
       }
-    
+
     }
 
   } catch (error) {
