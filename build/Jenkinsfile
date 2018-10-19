@@ -18,10 +18,6 @@ node {
     JobStages.updateApp('build', env)
     JobStages.submitJob('build', env)
 
-    stage("Run benchmarks") {
-      
-    }
-
   } catch (error) {
 
     currentBuild.result = "FAILURE"
