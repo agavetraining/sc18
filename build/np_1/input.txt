@@ -1,0 +1,60 @@
+!INPUT FILE FOR FUNWAVE_TVD
+  ! NOTE: all input parameter are capital sensitive
+  ! --------------------TITLE-------------------------------------
+  ! title only for log file
+TITLE = VESSEL
+  ! -------------------HOT START---------------------------------
+HOT_START = F
+FileNumber_HOTSTART = 1
+  ! -------------------PARALLEL INFO-----------------------------
+  !
+  !    PX,PY - processor numbers in X and Y
+  !    NOTE: make sure consistency with mpirun -np n (px*py)
+  !
+PX = 1
+PY = 1
+  ! --------------------DEPTH-------------------------------------
+  ! Depth types, DEPTH_TYPE=DATA: from depth file
+  !              DEPTH_TYPE=FLAT: idealized flat, need depth_flat
+  !              DEPTH_TYPE=SLOPE: idealized slope,
+  !                                 need slope,SLP starting point, Xslp
+  !                                 and depth_flat
+DEPTH_TYPE = FLAT
+DEPTH_FLAT = 10.0
+  ! -------------------PRINT---------------------------------
+  ! PRINT*,
+  ! result folder
+RESULT_FOLDER = output/
+
+  ! ------------------DIMENSION-----------------------------
+  ! global grid dimension
+Mglob = 500
+Nglob = 100
+
+  ! ----------------- TIME----------------------------------
+  ! time: total computational time/ plot time / screen interval
+  ! all in seconds
+TOTAL_TIME = 3.0
+PLOT_INTV = 1.0
+PLOT_INTV_STATION = 50000.0
+SCREEN_INTV = 1.0
+HOTSTART_INTV = 360000000000.0
+
+WAVEMAKER = INI_GAU
+AMP = 3.0
+Xc = 250.0
+Yc = 50.0
+WID = 20.0
+
+  ! -----------------GRID----------------------------------
+  ! if use spherical grid, in decimal degrees
+  ! cartesian grid sizes
+DX = 1.0
+DY = 1.0
+  ! ----------------SHIP WAKES ----------------------------
+VESSEL_FOLDER = ./
+NumVessel = 2
+  ! -----------------OUTPUT-----------------------------
+ETA = T
+U = T
+V = T
