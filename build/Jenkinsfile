@@ -78,7 +78,14 @@ node {
       def jobId = submitOutput.split(" ")[-1]
       env.JOB_ID = jobId.trim()
 
-      sleep 90
+      def jobState = 'SUBMITTING'
+      while (jobState != 'FINISHED' || jobState != 'FAILED') {
+        sleep 5
+        jobState = sh(returnStdout: true, script: "jobs-status ${env.JOB_ID}").trim()
+        print jobState
+      }
+
+      assert jobState == 'FINISHED'
 
       try {
         sh "jobs-output-list --rich --filter=type,length,name ${env.JOB_ID}"
