@@ -71,7 +71,7 @@ node {
       def jsonContent = JsonOutput.toJson(appSpecs)
       writeFile(file: "build/funwave-${env.JOB_TYPE}-job.json", text: jsonContent)
     }
-    
+
     stage("DEBUG"){
       println "USERNAME = ${env.AGAVE_USERNAME}"
       println "JOBTYPE = ${env.JOB_TYPE}"
@@ -88,11 +88,12 @@ node {
       env.JOB_ID = jobId.trim()
 
       def jobState = 'SUBMITTING'
-      while (1){
+      for(i = 0; i < 30; i++){
         sleep 10
         jobState = sh(returnStdout: true, script: "jobs-status ${env.JOB_ID}").trim()
         print jobState
-	if (jobState == 'FINISHED' || jobState != 'FAILED' || jobState != 'STOPPED'){
+	    if (jobState == 'FINISHED' || jobState == 'FAILED' || jobState == 'STOPPED'){
+          print jobState
           print "Job has ended"
           break;
         }
