@@ -1,6 +1,5 @@
 import groovy.json.JsonOutput
 
-
 node {
   currentBuild.result = "SUCCESS"
 
@@ -72,6 +71,16 @@ node {
       def jsonContent = JsonOutput.toJson(appSpecs)
       writeFile(file: "build/funwave-${env.JOB_TYPE}-job.json", text: jsonContent)
     }
+    
+    stage("DEBUG"){
+      println "USERNAME = ${env.AGAVE_USERNAME}"
+      println "JOBTYPE = ${env.JOB_TYPE}"
+      println "MACHINENAME = ${env.MACHINE_NAME}"
+      println "APPNAME = ${env.AGAVE_APP_NAME}"
+      println "CLIENTNAME = ${env.AGAVE_CLIENT_NAME}"
+      println " BUILD JOB JSON FILE "
+      sh "cat build/funwave-${env.JOB_TYPE}-job.json"
+    }
 
     stage("Submit job") {
       def submitOutput = sh(returnStdout: true, script: "jobs-submit -F build/funwave-${env.JOB_TYPE}-job.json")
@@ -79,10 +88,14 @@ node {
       env.JOB_ID = jobId.trim()
 
       def jobState = 'SUBMITTING'
-      while (jobState != 'FINISHED' || jobState != 'FAILED') {
-        sleep 5
+      while (1){
+        sleep 10
         jobState = sh(returnStdout: true, script: "jobs-status ${env.JOB_ID}").trim()
         print jobState
+	if (jobState == 'FINISHED' || jobState != 'FAILED' || jobState != 'STOPPED'){
+          print "Job has ended"
+          break;
+        }
       }
 
       assert jobState == 'FINISHED'
