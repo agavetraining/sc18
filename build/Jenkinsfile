@@ -1,0 +1,138 @@
+import groovy.json.JsonOutput
+
+
+node {
+  currentBuild.result = "SUCCESS"
+
+  env.AGAVE_TENANTS_API_BASEURL = "https://sandbox.agaveplatform.org/tenants"
+  env.MACHINE_NAME = "sandbox"
+  env.AGAVE_APP_NAME = "funwave-tvd-${env.JOB_TYPE}-${env.AGAVE_USERNAME}"
+  env.AGAVE_CLIENT_NAME = "jenkins-cli-${env.AGAVE_USERNAME}"
+  env.AGAVE_STORAGE_SYSTEM_ID = "sandbox-storage-${env.AGAVE_USERNAME}"
+  env.DEPLOYMENT_PATH = "/home/jovyan/funwave-jenkins-${env.JOB_TYPE}/"
+
+  try {
+
+    stage("Set up Agave CLI") {
+      try {
+        sh "tenants-list"
+        sh "tenants-init -t sandbox"
+      } catch (error) {
+        print "Tenant already initialized"
+      }
+
+      try {
+        sh "clients-delete -u '${env.AGAVE_USERNAME}' -p '${env.AGAVE_PASSWORD}' ${env.AGAVE_APP_NAME}"
+      } catch (error) {
+        print "Cannot delete client: ${env.AGAVE_APP_NAME} does not exist"
+      }
+
+      try {
+        sh "clients-create -u '${env.AGAVE_USERNAME}' -p '${env.AGAVE_PASSWORD}' -N '${env.AGAVE_APP_NAME}' -S"
+      } catch (error) {
+        print "Cannot create client: ${env.AGAVE_APP_NAME} already exists"
+      }
+
+      try {
+        sh "auth-tokens-create -u '${env.AGAVE_USERNAME}' -p '${env.AGAVE_PASSWORD}' "
+      } catch (error) {
+        print "Cannot create auth tokens for CLI. Aborting..."
+        throw error
+      }
+    }
+
+    stage("Clone Funwave TVD") {
+      checkout scm
+    }
+
+    stage("Configure deployment path") {
+      try {
+        sh "files-mkdir -S ${env.AGAVE_STORAGE_SYSTEM_ID} -N ${env.DEPLOYMENT_PATH}"
+        sh "files-upload -S ${env.AGAVE_STORAGE_SYSTEM_ID} -F build/funwave-${env.JOB_TYPE}-wrapper.txt ${env.DEPLOYMENT_PATH}"
+        sh "files-upload -S ${env.AGAVE_STORAGE_SYSTEM_ID} -F build/funwave-${env.JOB_TYPE}-app.txt ${env.DEPLOYMENT_PATH}"
+        sh "files-upload -S ${env.AGAVE_STORAGE_SYSTEM_ID} -F version.txt ${env.DEPLOYMENT_PATH}"
+
+        // We need to make sure that we're building the correct commit on the deploy system
+        env.GIT_COMMIT = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'")
+        env.GIT_COMMIT = env.GIT_COMMIT.trim()
+        writeFile(file: "build/commit.txt", text: env.GIT_COMMIT)
+        sh "files-upload -S ${env.AGAVE_STORAGE_SYSTEM_ID} -F build/commit.txt ${env.DEPLOYMENT_PATH}"
+	sleep 2
+
+      } catch (error) {
+        print "Could not configure deployment path."
+        throw error
+      }
+
+      sh "apps-addupdate -F build/funwave-${env.JOB_TYPE}-app.txt"
+    }
+
+    stage("Submit job") {
+      env.WEBHOOK_URL = sh(returnStdout: true, script: "requestbin-create")
+      env.WEBHOOK_URL = env.WEBHOOK_URL.trim()
+      env.VERSION = sh(returnStdout: true, script: 'cat version.txt | paste -sd "..-" -')
+
+      def notificationsSpecs = [
+        url: env.WEBHOOK_URL,
+        event: "*",
+        persistent: "true"
+      ]
+
+      def parametersSpecs = [
+        code_version: "latest"
+      ]
+
+      def appSpecs = [
+        name: "funwave-${env.JOB_TYPE}",
+        appId: "${env.AGAVE_USERNAME}-${env.MACHINE_NAME}-funwave-d${env.JOB_TYPE}-1.0",
+        maxRunTime: "00:10:00",
+        archive: false,
+        notifications: [notificationsSpecs],
+        parameters: parametersSpecs
+      ]
+
+      def jsonContent = JsonOutput.toJson(appSpecs)
+      writeFile(file: "build/funwave-${env.JOB_TYPE}-job.json", text: jsonContent)
+
+      def submitOutput = sh(returnStdout: true, script: "jobs-submit -F build/funwave-${env.JOB_TYPE}-job.json")
+      def jobId = submitOutput.split(" ")[-1]
+      env.JOB_ID = jobId.trim()
+
+      def jobState = 'SUBMITTING'
+      for (i = 0; i < 48; i++) {
+        sleep 5
+        jobState = sh(returnStdout: true, script: "jobs-status ${env.JOB_ID}").trim()
+        print jobState
+        if (jobState == 'FINISHED' || jobState == 'FAILED' || jobState == 'STOPPED') {
+          break
+        }
+      }
+
+      assert jobState == 'FINISHED'
+
+      try {
+        sh "jobs-output-list --rich --filter=type,length,name ${env.JOB_ID}"
+        sh "jobs-output-get -P ${env.JOB_ID} funwave-${env.JOB_TYPE}.out"
+      } catch (error) {
+        print "Could not get output from job id: ${env.JOB_ID}"
+      }
+    }
+
+  } catch (error) {
+    currentBuild.result = "FAILURE"
+    throw error
+  }
+}
+
+// This is covered in notebook 10
+if (currentBuild.result == 'SUCCESS' && env.JOB_TYPE == 'build') {
+  stage('Run benchmarks') {
+    def benchmarkPipeline = build job: 'funwave-benchmark-pipeline', parameters: [
+      [
+        $class: 'StringParameterValue',
+        name: 'JOB_TYPE',
+        value: 'benchmark'
+      ]
+    ]
+  }
+}
