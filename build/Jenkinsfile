@@ -84,7 +84,7 @@ node {
 
       def appSpecs = [
         name: "funwave-${env.JOB_TYPE}",
-        appId: "${env.AGAVE_USERNAME}-${env.MACHINE_NAME}-funwave-d${env.JOB_TYPE}-1.0",
+        appId: "${env.AGAVE_USERNAME}-${env.MACHINE_NAME}-funwave-d${env.JOB_TYPE}-3.2.0",
         maxRunTime: "00:10:00",
         archive: false,
         notifications: [notificationsSpecs],
