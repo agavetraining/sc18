@@ -3,22 +3,18 @@ version: '2'
 volumes:
   training-volume:
   ssh-keygen-volume:
-  # jenkins-home-volume:
 
 services:
 
   # traefik reverse proxy to expose the jupyter and jenkins servers over ssl via a common hostname
   traefik:
-    image: traefik:latest
+    image: traefik:v1.7
     mem_limit: 512m
-    #command: --debug=True --docker --docker.watch --web --web.address=:28443 --entryPoints='Name:http Address::80 Redirect.EntryPoint:https' --entryPoints='Name:https Address::443 TLS:/ssl/agave.training.crt,/ssl/agave.training.key' --defaultEntryPoints='http,https'
     command: --debug=True --docker --docker.watch --web --web.address=:28443 --entryPoints='Name:http Address::80' --entryPoints='Name:https Address::443' --defaultEntryPoints='http,https'
     ports:
       # Not currently serving content here
-      # - '443:443'
+      - '8443:443'
       - '8888:80'
-      # This is a terminal for traefik. Open it up if you need to see it.
-      # - '28443:28443'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -27,7 +23,7 @@ services:
   # jupyter container. By doing this, we don't need to ship keys with the image
   # or source.
   ssh-keygen:
-    image: agaveplatform/jupyter-notebook:5.2
+    image: agaveplatform/jupyter-notebook:5.2-slim
     entrypoint: /bin/bash
     command: /usr/local/bin/keygen.sh
     user: jovyan
@@ -38,13 +34,9 @@ services:
       - ./docker/ssh-keygen/keygen.sh:/usr/local/bin/keygen.sh
 
   jupyter:
-    image: agaveplatform/jupyter-notebook:5.2
-#    command: start-notebook.sh --NotebookApp.token=''
+    image: agaveplatform/jupyter-notebook:5.2-slim
     mem_limit: 2048m
     restart: on-failure
-    # We will access the notebook through Traefic
-    #ports:
-    #  - '8888:8888'
     depends_on:
       - ssh-keygen
     env_file:
@@ -54,17 +46,15 @@ services:
     volumes:
       - ssh-keygen-volume:/home/jovyan/.ssh
       - training-volume:/home/jovyan/work
-      - .:/home/jovyan/notebooks
-      - ./INSTALL.ipynb:/home/jovyan/INSTALL.ipynb
     labels:
       - "traefik.port=8888"
       - "traefik.protocol=http"
-      - "traefik.tags=${AGAVE_USERNAME},jupyter"
-      - "traefik.backend=${AGAVE_USERNAME}-training"
+      - "traefik.tags=testuser,jupyter"
+      - "traefik.backend=testuser-training"
       - "traefik.frontend.rule=PathPrefix:/"
 
   sandbox:
-    image: agaveplatform/training-sandbox:latest
+    image: agaveplatform/training-sandbox:2.2.27
     mem_limit: 2048m
     privileged: True
     restart: on-failure
@@ -83,32 +73,3 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
       - traefik.enable=false
-
-  jenkins:
-    build:
-      context: jenkins
-      dockerfile: Dockerfile
-    image: agaveplatform/jenkins:sc18
-    mem_limit: 2048m
-    privileged: True
-    restart: on-failure
-    ports:
-      - '8080:8080'
-    #  - '8443:8443'
-    depends_on:
-      - ssh-keygen
-    env_file:
-      - training.env
-    environment:
-      - AGAVE_CACHE_DIR=/var/jenkins_home/.$AGAVE_TENANT
-#      - JENKINS_OPTS="--prefix=/jenkins "
-    volumes:
-      - ssh-keygen-volume:/var/jenkins_home/.ssh
-      - ./jenkins/jenkins_home:/var/jenkins_home
-    labels:
-      - "traefik.port=8080"
-      - "traefik.protocol=http"
-      - "traefik.tags=jenkins"
-      - "traefik.backend=jenkins"
-      - "traefik.frontend.rule=PathPrefix:/jenkins"
-      - "traefik.frontend.passHostHeader=true"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-AGAVE_TENANT=${AGAVE_TENANT:-agave.prod}
+AGAVE_TENANT=${AGAVE_TENANT:-sandbox}
 MACHINE_IP=${MACHINE_IP:-$HOSTNAME}
 
 # check whether we need to configure a tenant
