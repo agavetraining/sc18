@@ -30,7 +30,7 @@ Schedule
     <tr>
       <td class="tg-yw4l" style="min-width:150px; font-size: 1.5em; text-align:left;"> 40&nbsp;min </td>
       <td class="tg-yw4l" style="min-width:150px; font-size: 1.5em; text-align:left;"> Presenter </td>
-      <td class="tg-yw4l" style="min-width: 150px; width:60%; font-size: 1.5em; text-align:left;" title="Introduce instructors and learners. Lay out learning objectives for the morning session. Present an overview of containers and the Agave Platform (Presentation and Discussion; 25 minutes)"> <a href="https://github.com/agavetraining/sc18/blob/master/00%20-%20Introduction.ipynb">Introductions</a> and [Overview](https://docs.google.com/presentation/d/1cKXnmUFuGULlSMWsixtitLywcuD9pY7pWaqwdG2FjnI) </td>
+      <td class="tg-yw4l" style="min-width: 150px; width:60%; font-size: 1.5em; text-align:left;" title="Introduce instructors and learners. Lay out learning objectives for the morning session. Present an overview of containers and the Agave Platform (Presentation and Discussion; 25 minutes)"> <a href="https://github.com/agavetraining/sc18/blob/master/00%20-%20Introduction.ipynb">Introductions</a> and <a href="https://tinyurl.com/agave-sc18" target="_blank">Overview</a></td>
     </tr>
     <tr>
       <td class="tg-yw4l" style="min-width: 150px; font-size: 1.5em; text-align:left;"> 10&nbsp;min </td>
